@@ -83,7 +83,7 @@ def drawUI():
         icon = Image.open(os.path.join(assets, bmp))
         screen.paste(icon, pos)
 
-    draw.line([(168, 0), (168, 120)], fill=0, width=3)  # Вертикальная линия
+    draw.line([(168, 0), (168, 122)], fill=0, width=3)  # Вертикальная линия
     draw.line([(168, 45), (260, 45)], fill=0, width=3)  # Горизонтальная линия
     draw.text((186, 48), f"{getLocalIP()}", font=regular10, fill=0)  # IP адрес
     draw.text((175, 95), getRPiModel(), font=regular10, fill=0)  # Модель Raspberry Pi
