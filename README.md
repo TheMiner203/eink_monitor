@@ -17,7 +17,7 @@
 # 🛠️ Installation
 1. Clone the repository:
 ```bash
-git clone https://github.com/TheMiner203/eink_monitor.git
+git clone https://github.com/TheMiner203/eink_monitor
 cd eink_monitor
 ```
 2. Install dependencies:
@@ -27,7 +27,7 @@ chmod +x ./install.sh
 ```
 3. Run the application:
 ```bash
-python3 eink_monitor.py
+python3 eink_monitor.py &
 ```
 
 ## 📜 License
