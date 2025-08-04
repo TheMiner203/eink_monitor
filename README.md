@@ -15,17 +15,21 @@
 - **Screen rotation support**
 
 # 🛠️ Installation
-1. Clone the repository:
+1. Install git:
+```bash
+sudo apt install -y git
+```
+2. Clone the repository:
 ```bash
 git clone https://github.com/TheMiner203/eink_monitor
 cd eink_monitor
 ```
-2. Install dependencies:
+3. Install dependencies:
 ```bash
 chmod +x ./install.sh
 ./install.sh
 ```
-3. Run the application:
+4. Run the application:
 ```bash
 python3 eink_monitor.py &
 ```
