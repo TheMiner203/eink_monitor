@@ -3,6 +3,7 @@
 import datetime
 import getpass
 import logging
+import signal
 import os
 import re
 import socket
@@ -41,6 +42,8 @@ bus = smbus.SMBus(1)
 epd = epd2in13_V4.EPD()
 screen = Image.new('1', (epd.height, epd.width), 255)
 draw = ImageDraw.Draw(screen)
+
+_shutdownRequested = False
 
 
 def drawUI():
@@ -303,22 +306,28 @@ def shutdown():
     exit()
 
 
+def signalHandler(signum, frame):
+    global _shutdownRequested
+    logging.info(f"Received signal {signum}, shutting down...")
+    _shutdownRequested = True
+    shutdown()
+
+
 if __name__ == "__main__":
-    try:
-        UPSDetected = initUPS()
-        initEPD()
-        drawUI()
-        while True:
-            start = time.time()
-            info = getValues()
-            drawValues()
-            elapsed = time.time() - start
-            sleep_time = max(0, REFRESH_RATE - elapsed)
-            if UPSDetected and info["capacity"] <= 0 and not GPIO.input(4):
-                logging.info("Capacity is 0%, shutting down...")
-                shutdown()  # Отключить при 0% зарядки чтобы на дисплее не осталось картинки
-            time.sleep(sleep_time)
-    except KeyboardInterrupt:
-        #  screen.save("screenshot.png", "PNG")
-        logging.info("Ctrl+C pressed")
-        shutdown()
+    signal.signal(signal.SIGTERM, signalHandler)
+    signal.signal(signal.SIGINT, signalHandler)
+    UPSDetected = initUPS()
+    initEPD()
+    drawUI()
+    while True:
+        if _shutdownRequested:
+            break
+        start = time.time()
+        info = getValues()
+        drawValues()
+        elapsed = time.time() - start
+        sleep_time = max(0, REFRESH_RATE - elapsed)
+        if UPSDetected and info["capacity"] <= 0 and not GPIO.input(4):
+            logging.info("Capacity is 0%, shutting down...")
+            shutdown()  # Отключить при 0% зарядки чтобы на дисплее не осталось картинки
+        time.sleep(sleep_time)
