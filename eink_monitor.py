@@ -1,19 +1,21 @@
 #!/usr/bin/env python3
 
-import os
-import socket
-import logging
-import struct
-import time
 import datetime
-import re
-import sys
-import psutil
 import getpass
-import smbus  # type:ignore[reportMissingImports]
-import RPi.GPIO as GPIO  # type:ignore[reportMissingImports]
-from waveshare_epd import epd2in13_V4  # type:ignore[reportMissingImports]
+import logging
+import os
+import re
+import socket
+import struct
+import sys
+import time
+
+import psutil
 from PIL import Image, ImageDraw, ImageFont  # type:ignore[reportMissingImports]
+import smbus                                 # type:ignore[reportMissingImports]
+import RPi.GPIO as GPIO                      # type:ignore[reportMissingImports]
+
+from waveshare_epd import epd2in13_V4  # type:ignore[reportMissingImports]
 
 REFRESH_RATE = 1
 ROTATE = True
@@ -34,6 +36,7 @@ bold24 = ImageFont.truetype(os.path.join(assets, 'PT_Sans_bold.ttf'), 24)
 regular10 = ImageFont.truetype(os.path.join(assets, 'PT_Sans-Web-Regular.ttf'), 10)
 chargingIcon = Image.open(os.path.join(assets, "Charging.bmp"))
 lastFullUpdate = time.time()
+lastIP = None
 bus = smbus.SMBus(1)
 epd = epd2in13_V4.EPD()
 screen = Image.new('1', (epd.height, epd.width), 255)
@@ -50,16 +53,6 @@ def drawUI():
         else:
             line = model
         return line
-
-    def getLocalIP():
-        try:
-            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            s.connect(("8.8.8.8", 80))
-            local_ip = s.getsockname()[0]
-            s.close()
-            return local_ip
-        except (socket.error, OSError):
-            return "127.0.0.1"
 
     def drawHostnameInfo(draw, font, x, y):
         fullText = f"{getpass.getuser()}@{socket.gethostname()}"
@@ -86,7 +79,6 @@ def drawUI():
 
     draw.line([(168, 0), (168, 122)], fill=0, width=3)  # Вертикальная линия
     draw.line([(168, 45), (260, 45)], fill=0, width=3)  # Горизонтальная линия
-    draw.text((186, 48), f"{getLocalIP()}", font=regular10, fill=0)  # IP адрес
     draw.text((175, 95), getRPiModel(), font=regular10, fill=0)  # Модель Raspberry Pi
     drawHostnameInfo(draw, regular10, 175, 105)
 
@@ -116,6 +108,25 @@ def getValues() -> dict:
 
 
 def drawValues():
+    def getLocalIP():
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.connect(("8.8.8.8", 80))
+            local_ip = s.getsockname()[0]
+            s.close()
+            return local_ip
+        except (socket.error, OSError):
+            return "127.0.0.1"
+
+    def updateIP():
+        global lastIP
+        currentIP = getLocalIP()
+
+        if currentIP != lastIP:
+            draw.rectangle([(186, 48), (250, 58)], fill=1)
+            draw.text((186, 48), currentIP, font=regular10, fill=0)
+            lastIP = currentIP
+
     def clearData():
         draw.rectangle([(38, 4), (164, 120)], fill=1)   # Очистка левой панели
         draw.rectangle([(170, 0), (250, 36)], fill=1)   # Очистка времени и даты
@@ -226,6 +237,7 @@ def drawValues():
     formatRAM()
     setBatteryIcon()
     setChargingIcon()
+    updateIP()
     drawUptime(draw, regular10, 186, 64)  # Uptime
     if not UPSDetected: draw.text((38, 6), "UPS not detected", font=bold13, fill=0)
     else: draw.text((38, 6), f'{round(info["capacity"])}%  -  {round(info["voltage"], 2)}V', font=bold13)
@@ -307,5 +319,6 @@ if __name__ == "__main__":
                 shutdown()  # Отключить при 0% зарядки чтобы на дисплее не осталось картинки
             time.sleep(sleep_time)
     except KeyboardInterrupt:
+        #  screen.save("screenshot.png", "PNG")
         logging.info("Ctrl+C pressed")
         shutdown()
