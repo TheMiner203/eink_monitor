@@ -9,6 +9,7 @@ import datetime
 import re
 import sys
 import psutil
+import getpass
 import smbus  # type:ignore[reportMissingImports]
 import RPi.GPIO as GPIO  # type:ignore[reportMissingImports]
 from waveshare_epd import epd2in13_V4  # type:ignore[reportMissingImports]
@@ -61,7 +62,7 @@ def drawUI():
             return "127.0.0.1"
 
     def drawHostnameInfo(draw, font, x, y):
-        fullText = f"{os.getlogin()}@{socket.gethostname()}"
+        fullText = f"{getpass.getuser()}@{socket.gethostname()}"
         hostnameOnly = socket.gethostname()
 
         fullBbox = font.getbbox(fullText)
