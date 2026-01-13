@@ -268,7 +268,7 @@ def initUPS() -> bool:
     GPIO.setup(4, GPIO.IN)  # GPIO4 is used to detect whether an external power supply is inserted
     try: bus.write_word_data(CW2015_ADDRESS, CW2015_REG_MODE, 0x30)
     except OSError as e:
-        if "Input/output error" in str(e):
+        if "Input/output error" in str(e) or "I/O error" in str(e):
             logging.warning("UPS not detected!")
             GPIO.cleanup()
             return False
